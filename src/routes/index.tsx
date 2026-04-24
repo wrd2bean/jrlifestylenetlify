@@ -78,7 +78,7 @@ function Index() {
             </h1>
             <p className="mt-6 max-w-md text-base text-muted-foreground">
               {homepageFeatured?.description ??
-                "JR Lifestyle now runs on a live catalog, so every new drop can go from admin dashboard to storefront instantly."}
+                "JR Lifestyle now runs on a live catalog, so every new drop can go from the backend to the storefront instantly."}
             </p>
             {homepageFeatured && (
               <p className="mt-5 font-display text-3xl uppercase tracking-[0.08em] text-bone">
@@ -102,12 +102,6 @@ function Index() {
                   Shop The Drop
                 </Link>
               )}
-              <Link
-                to="/admin"
-                className="border border-border px-7 py-3.5 text-[11px] font-bold uppercase tracking-[0.25em] text-foreground transition-colors hover:border-foreground"
-              >
-                Open Admin
-              </Link>
             </div>
             <div className="mt-10 flex items-center gap-8 text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
               <div>
@@ -150,7 +144,7 @@ function Index() {
                 )}
               </div>
               <span className="absolute -bottom-3 -left-3 bg-blood px-3 py-1.5 font-display text-xs uppercase tracking-[0.3em] text-primary-foreground">
-                Featured In Admin · No Rebuilds
+                Featured Live · No Rebuilds
               </span>
             </div>
           </div>

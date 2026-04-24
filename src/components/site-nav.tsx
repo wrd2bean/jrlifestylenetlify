@@ -21,7 +21,6 @@ export function SiteNav() {
         </Link>
         <div className="flex items-center gap-5 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
           <Link to="/about" className="hidden transition-colors hover:text-foreground md:inline">Story</Link>
-          <Link to="/admin" className="hidden transition-colors hover:text-foreground md:inline">Admin</Link>
           <Link
             to="/cart"
             className="flex items-center gap-1.5 transition-colors hover:text-foreground"
