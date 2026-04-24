@@ -20,19 +20,27 @@ export type Database = {
           id: string;
           items: Json;
           order_number: string;
+          payment_status: string;
+          preorder: boolean;
           shipping_address: Json | null;
           status: Database["public"]["Enums"]["order_status"];
+          stripe_checkout_session_id: string | null;
+          stripe_payment_intent_id: string | null;
           total_amount: number;
         };
         Insert: {
           created_at?: string;
-          customer_email: string;
-          customer_name: string;
+          customer_email?: string;
+          customer_name?: string;
           id?: string;
           items?: Json;
           order_number: string;
+          payment_status?: string;
+          preorder?: boolean;
           shipping_address?: Json | null;
           status?: Database["public"]["Enums"]["order_status"];
+          stripe_checkout_session_id?: string | null;
+          stripe_payment_intent_id?: string | null;
           total_amount: number;
         };
         Update: {
@@ -42,8 +50,12 @@ export type Database = {
           id?: string;
           items?: Json;
           order_number?: string;
+          payment_status?: string;
+          preorder?: boolean;
           shipping_address?: Json | null;
           status?: Database["public"]["Enums"]["order_status"];
+          stripe_checkout_session_id?: string | null;
+          stripe_payment_intent_id?: string | null;
           total_amount?: number;
         };
         Relationships: [];
@@ -83,14 +95,51 @@ export type Database = {
           },
         ];
       };
+      product_videos: {
+        Row: {
+          created_at: string;
+          id: string;
+          product_id: string;
+          sort_order: number;
+          storage_path: string | null;
+          video_url: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          product_id: string;
+          sort_order?: number;
+          storage_path?: string | null;
+          video_url: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          product_id?: string;
+          sort_order?: number;
+          storage_path?: string | null;
+          video_url?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "product_videos_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       products: {
         Row: {
           category: string;
           colors: string[];
           created_at: string;
           description: string;
+          featured_homepage: boolean;
           id: string;
           is_active: boolean;
+          is_preorder: boolean;
           name: string;
           price: number;
           sizes: string[];
@@ -104,8 +153,10 @@ export type Database = {
           colors?: string[];
           created_at?: string;
           description?: string;
+          featured_homepage?: boolean;
           id?: string;
           is_active?: boolean;
+          is_preorder?: boolean;
           name: string;
           price: number;
           sizes?: string[];
@@ -119,8 +170,10 @@ export type Database = {
           colors?: string[];
           created_at?: string;
           description?: string;
+          featured_homepage?: boolean;
           id?: string;
           is_active?: boolean;
+          is_preorder?: boolean;
           name?: string;
           price?: number;
           sizes?: string[];
@@ -155,6 +208,42 @@ export type Database = {
         };
         Relationships: [];
       };
+      store_settings: {
+        Row: {
+          allow_promotion_codes: boolean;
+          created_at: string;
+          delivery_notes: string;
+          enable_automatic_tax: boolean;
+          estimated_tax_rate: number;
+          free_shipping_threshold: number | null;
+          id: string;
+          shipping_flat_rate: number;
+          updated_at: string;
+        };
+        Insert: {
+          allow_promotion_codes?: boolean;
+          created_at?: string;
+          delivery_notes?: string;
+          enable_automatic_tax?: boolean;
+          estimated_tax_rate?: number;
+          free_shipping_threshold?: number | null;
+          id?: string;
+          shipping_flat_rate?: number;
+          updated_at?: string;
+        };
+        Update: {
+          allow_promotion_codes?: boolean;
+          created_at?: string;
+          delivery_notes?: string;
+          enable_automatic_tax?: boolean;
+          estimated_tax_rate?: number;
+          free_shipping_threshold?: number | null;
+          id?: string;
+          shipping_flat_rate?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -164,7 +253,7 @@ export type Database = {
     };
     Enums: {
       app_role: "admin" | "employee";
-      order_status: "pending" | "paid" | "fulfilled" | "cancelled";
+      order_status: "paid" | "processing" | "shipped" | "delivered" | "canceled";
       product_status: "active" | "sold_out" | "draft";
     };
     CompositeTypes: {
@@ -174,7 +263,6 @@ export type Database = {
 };
 
 type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
-
 type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">];
 
 export type Tables<
@@ -294,7 +382,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "employee"],
-      order_status: ["pending", "paid", "fulfilled", "cancelled"],
+      order_status: ["paid", "processing", "shipped", "delivered", "canceled"],
       product_status: ["active", "sold_out", "draft"],
     },
   },

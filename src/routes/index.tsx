@@ -2,14 +2,26 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { ProductCard } from "@/components/product-card";
-import { fetchStoreProducts, type StoreProduct } from "@/lib/catalog";
+import {
+  fetchHomepageFeaturedProduct,
+  fetchStoreProducts,
+  formatMoney,
+  getPrimaryImage,
+  getPurchaseButtonLabel,
+  type StoreProduct,
+} from "@/lib/catalog";
 import { DecorBg } from "@/components/decor-bg";
-import heroTee from "@/assets/tee-born-to-win.jpeg";
 
 export const Route = createFileRoute("/")({
-  loader: async () => ({
-    featured: await fetchStoreProducts(),
-  }),
+  loader: async () => {
+    const products = await fetchStoreProducts();
+    const homepageFeatured = await fetchHomepageFeaturedProduct();
+
+    return {
+      products,
+      homepageFeatured,
+    };
+  },
   component: Index,
   head: () => ({
     meta: [
@@ -23,7 +35,10 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const { featured }: { featured: StoreProduct[] } = Route.useLoaderData();
+  const {
+    products,
+    homepageFeatured,
+  }: { products: StoreProduct[]; homepageFeatured: StoreProduct | null } = Route.useLoaderData();
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -48,30 +63,45 @@ function Index() {
 
       <section className="relative overflow-hidden border-b border-border/60">
         <DecorBg />
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{ background: "var(--gradient-spotlight)" }}
-        />
+        <div className="pointer-events-none absolute inset-0" style={{ background: "var(--gradient-spotlight)" }} />
         <div className="relative mx-auto grid max-w-7xl gap-10 px-5 py-16 md:grid-cols-12 md:gap-6 md:py-24">
           <div className="md:col-span-7">
             <span className="inline-flex items-center gap-2 border border-border bg-card/50 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.25em] text-bone">
-              <span className="h-1.5 w-1.5 rounded-full bg-blood" /> Drop 001 — Live Now
+              <span className="h-1.5 w-1.5 rounded-full bg-blood" /> Featured Tee — Live Now
             </span>
             <h1 className="mt-6 font-display text-[18vw] leading-[0.85] tracking-tight text-foreground md:text-[10rem]">
-              BORN
+              {homepageFeatured?.name?.split(" ").slice(0, 2).join(" ") ?? "BORN"}
               <br />
-              <span className="text-blood">TO</span> WIN
+              <span className="text-blood">
+                {homepageFeatured?.name?.split(" ").slice(2).join(" ") || "TO WIN"}
+              </span>
             </h1>
             <p className="mt-6 max-w-md text-base text-muted-foreground">
-              Cards on the table. Dice in the air. JR Lifestyle now runs on a live catalog, so every new drop can go from admin dashboard to storefront instantly.
+              {homepageFeatured?.description ??
+                "JR Lifestyle now runs on a live catalog, so every new drop can go from admin dashboard to storefront instantly."}
             </p>
+            {homepageFeatured && (
+              <p className="mt-5 font-display text-3xl uppercase tracking-[0.08em] text-bone">
+                {formatMoney(homepageFeatured.price)}
+              </p>
+            )}
             <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Link
-                to="/drop"
-                className="bg-bone px-7 py-3.5 text-[11px] font-bold uppercase tracking-[0.25em] text-background transition-colors hover:bg-foreground"
-              >
-                Shop The Drop
-              </Link>
+              {homepageFeatured ? (
+                <Link
+                  to="/product/$slug"
+                  params={{ slug: homepageFeatured.slug }}
+                  className="bg-bone px-7 py-3.5 text-[11px] font-bold uppercase tracking-[0.25em] text-background transition-colors hover:bg-foreground"
+                >
+                  {getPurchaseButtonLabel(homepageFeatured)}
+                </Link>
+              ) : (
+                <Link
+                  to="/shop"
+                  className="bg-bone px-7 py-3.5 text-[11px] font-bold uppercase tracking-[0.25em] text-background transition-colors hover:bg-foreground"
+                >
+                  Shop The Drop
+                </Link>
+              )}
               <Link
                 to="/admin"
                 className="border border-border px-7 py-3.5 text-[11px] font-bold uppercase tracking-[0.25em] text-foreground transition-colors hover:border-foreground"
@@ -81,7 +111,7 @@ function Index() {
             </div>
             <div className="mt-10 flex items-center gap-8 text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
               <div>
-                <span className="block font-display text-2xl text-foreground">{featured.length}</span>
+                <span className="block font-display text-2xl text-foreground">{products.length}</span>
                 Live Styles
               </div>
               <div>
@@ -94,6 +124,7 @@ function Index() {
               </div>
             </div>
           </div>
+
           <div className="relative md:col-span-5">
             <div className="relative">
               <div
@@ -101,10 +132,25 @@ function Index() {
                 style={{ background: "radial-gradient(circle, oklch(0.55 0.25 25 / 0.4), transparent 70%)" }}
               />
               <div className="relative overflow-hidden bg-card">
-                <img src={heroTee} alt="Born to Win flagship tee" className="h-full w-full object-cover" />
+                {homepageFeatured?.videos?.[0] ? (
+                  <video
+                    src={homepageFeatured.videos[0].videoUrl}
+                    className="h-full w-full object-cover"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                  />
+                ) : (
+                  <img
+                    src={homepageFeatured ? getPrimaryImage(homepageFeatured) : ""}
+                    alt={homepageFeatured?.name ?? "Featured tee"}
+                    className="h-full w-full object-cover"
+                  />
+                )}
               </div>
               <span className="absolute -bottom-3 -left-3 bg-blood px-3 py-1.5 font-display text-xs uppercase tracking-[0.3em] text-primary-foreground">
-                Dynamic Catalog · No Rebuilds
+                Featured In Admin · No Rebuilds
               </span>
             </div>
           </div>
@@ -128,7 +174,7 @@ function Index() {
             </Link>
           </div>
           <div className="mt-12 grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
-            {featured.map((product) => (
+            {products.slice(0, 3).map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
@@ -147,7 +193,7 @@ function Index() {
           <div className="space-y-4 text-base text-muted-foreground">
             <p>JR Lifestyle is built for the late nights, the long odds, and the come-up that nobody saw coming.</p>
             <p>
-              Every piece in this drop is heavy-weight cotton, oversized fit, and now managed through a beginner-friendly product dashboard backed by your database.
+              Every piece in this drop is heavy-weight cotton, oversized fit, and now managed through a beginner-friendly product dashboard backed by your database and live checkout flow.
             </p>
             <Link
               to="/about"

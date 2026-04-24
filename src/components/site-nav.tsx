@@ -1,7 +1,10 @@
 import { Link } from "@tanstack/react-router";
 import { ShoppingBag, Menu } from "lucide-react";
+import { useCart } from "@/lib/cart";
 
 export function SiteNav() {
+  const { itemCount } = useCart();
+
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-5">
@@ -19,10 +22,14 @@ export function SiteNav() {
         <div className="flex items-center gap-5 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
           <Link to="/about" className="hidden transition-colors hover:text-foreground md:inline">Story</Link>
           <Link to="/admin" className="hidden transition-colors hover:text-foreground md:inline">Admin</Link>
-          <button className="flex items-center gap-1.5 transition-colors hover:text-foreground" aria-label="cart">
+          <Link
+            to="/cart"
+            className="flex items-center gap-1.5 transition-colors hover:text-foreground"
+            aria-label="cart"
+          >
             <ShoppingBag className="h-4 w-4" />
-            <span className="hidden sm:inline">Bag (0)</span>
-          </button>
+            <span className="hidden sm:inline">Bag ({itemCount})</span>
+          </Link>
         </div>
       </div>
     </header>

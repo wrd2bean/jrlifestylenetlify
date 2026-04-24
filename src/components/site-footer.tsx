@@ -36,6 +36,10 @@ export function SiteFooter() {
             <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
               <li><Link to="/about" className="hover:text-foreground">Our Story</Link></li>
               <li><Link to="/contact" className="hover:text-foreground">Contact</Link></li>
+              <li><Link to="/size-guide" className="hover:text-foreground">Size Guide</Link></li>
+              <li><Link to="/return-policy" className="hover:text-foreground">Returns</Link></li>
+              <li><Link to="/privacy-policy" className="hover:text-foreground">Privacy</Link></li>
+              <li><Link to="/terms-of-service" className="hover:text-foreground">Terms</Link></li>
             </ul>
           </div>
         </div>

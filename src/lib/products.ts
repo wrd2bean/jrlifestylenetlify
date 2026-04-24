@@ -16,7 +16,10 @@ export type LegacyProduct = {
   stockQuantity: number;
   isActive: boolean;
   isSoldOut: boolean;
+  isPreorder: boolean;
+  featuredHomepage: boolean;
   images: string[];
+  videos: string[];
 };
 
 export const legacyProducts: LegacyProduct[] = [
@@ -31,7 +34,10 @@ export const legacyProducts: LegacyProduct[] = [
     stockQuantity: 42,
     isActive: true,
     isSoldOut: false,
+    isPreorder: false,
+    featuredHomepage: true,
     images: [bornToWin, joker],
+    videos: [],
   },
   {
     slug: "get-rich-or-die-trying-tee",
@@ -44,7 +50,10 @@ export const legacyProducts: LegacyProduct[] = [
     stockQuantity: 17,
     isActive: true,
     isSoldOut: false,
+    isPreorder: false,
+    featuredHomepage: false,
     images: [getRich, jrRed],
+    videos: [],
   },
   {
     slug: "no-luck-all-god-tee",
@@ -56,7 +65,10 @@ export const legacyProducts: LegacyProduct[] = [
     colors: ["Black", "White"],
     stockQuantity: 0,
     isActive: true,
-    isSoldOut: true,
+    isSoldOut: false,
+    isPreorder: true,
+    featuredHomepage: false,
     images: [noLuck, jrWhite],
+    videos: [],
   },
 ];

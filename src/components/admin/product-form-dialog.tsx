@@ -1,5 +1,5 @@
-import { type FormEvent, useEffect, useState } from "react";
-import { ImagePlus, LoaderCircle, Trash2 } from "lucide-react";
+import { type FormEvent, type ReactNode, useEffect, useState } from "react";
+import { ImagePlus, LoaderCircle, Trash2, Video } from "lucide-react";
 import { saveProduct, type ProductEditorValues } from "@/lib/admin";
 import {
   SIZE_OPTIONS,
@@ -7,6 +7,7 @@ import {
   parseCommaSeparated,
   serializeCommaSeparated,
   type ProductImage,
+  type ProductVideo,
   type StoreProduct,
 } from "@/lib/catalog";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,8 @@ function createInitialValues(product?: StoreProduct | null): ProductEditorValues
     category: product?.category ?? "T-Shirts",
     isActive: product?.isActive ?? true,
     isSoldOut: product?.status === "sold_out",
+    isPreorder: product?.isPreorder ?? false,
+    featuredHomepage: product?.featuredHomepage ?? false,
   };
 }
 
@@ -54,6 +57,9 @@ export function ProductFormDialog({
   const [existingImages, setExistingImages] = useState<ProductImage[]>(product?.images ?? []);
   const [removedImages, setRemovedImages] = useState<ProductImage[]>([]);
   const [newFiles, setNewFiles] = useState<PreviewFile[]>([]);
+  const [existingVideos, setExistingVideos] = useState<ProductVideo[]>(product?.videos ?? []);
+  const [removedVideos, setRemovedVideos] = useState<ProductVideo[]>([]);
+  const [newVideoFiles, setNewVideoFiles] = useState<PreviewFile[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -65,16 +71,19 @@ export function ProductFormDialog({
     setExistingImages(product?.images ?? []);
     setRemovedImages([]);
     setNewFiles([]);
+    setExistingVideos(product?.videos ?? []);
+    setRemovedVideos([]);
+    setNewVideoFiles([]);
     setErrorMessage(null);
   }, [open, product]);
 
   useEffect(() => {
     return () => {
-      for (const file of newFiles) {
+      for (const file of [...newFiles, ...newVideoFiles]) {
         URL.revokeObjectURL(file.previewUrl);
       }
     };
-  }, [newFiles]);
+  }, [newFiles, newVideoFiles]);
 
   function toggleSize(size: string, checked: boolean) {
     setValues((current) => ({
@@ -88,12 +97,23 @@ export function ProductFormDialog({
     setRemovedImages((current) => [...current, image]);
   }
 
-  function handleNewFileRemove(targetFile: PreviewFile) {
-    URL.revokeObjectURL(targetFile.previewUrl);
-    setNewFiles((current) => current.filter((entry) => entry.previewUrl !== targetFile.previewUrl));
+  function handleExistingVideoRemove(video: ProductVideo) {
+    setExistingVideos((current) => current.filter((entry) => entry.id !== video.id));
+    setRemovedVideos((current) => [...current, video]);
   }
 
-  function handleFileChange(files: FileList | null) {
+  function handleNewFileRemove(targetFile: PreviewFile, type: "image" | "video") {
+    URL.revokeObjectURL(targetFile.previewUrl);
+
+    if (type === "image") {
+      setNewFiles((current) => current.filter((entry) => entry.previewUrl !== targetFile.previewUrl));
+      return;
+    }
+
+    setNewVideoFiles((current) => current.filter((entry) => entry.previewUrl !== targetFile.previewUrl));
+  }
+
+  function handleFileChange(files: FileList | null, type: "image" | "video") {
     if (!files || files.length === 0) return;
 
     const previews = Array.from(files).map((file) => ({
@@ -101,7 +121,12 @@ export function ProductFormDialog({
       previewUrl: URL.createObjectURL(file),
     }));
 
-    setNewFiles((current) => [...current, ...previews]);
+    if (type === "image") {
+      setNewFiles((current) => [...current, ...previews]);
+      return;
+    }
+
+    setNewVideoFiles((current) => [...current, ...previews]);
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -119,9 +144,12 @@ export function ProductFormDialog({
         existingImages,
         removedImages,
         newFiles: newFiles.map((entry) => entry.file),
+        existingVideos,
+        removedVideos,
+        newVideoFiles: newVideoFiles.map((entry) => entry.file),
       });
 
-      for (const file of newFiles) {
+      for (const file of [...newFiles, ...newVideoFiles]) {
         URL.revokeObjectURL(file.previewUrl);
       }
 
@@ -145,21 +173,24 @@ export function ProductFormDialog({
     colors: parseCommaSeparated(colorsInput),
     stockQuantity: values.stockQuantity,
     isActive: values.isActive,
+    isPreorder: values.isPreorder,
+    featuredHomepage: values.featuredHomepage,
     status: !values.isActive ? "draft" : values.isSoldOut ? "sold_out" : "active",
     createdAt: product?.createdAt ?? new Date().toISOString(),
     updatedAt: product?.updatedAt ?? new Date().toISOString(),
     images: existingImages,
+    videos: existingVideos,
   });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto border-border bg-card text-card-foreground">
+      <DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto border-border bg-card text-card-foreground">
         <DialogHeader>
           <DialogTitle className="font-display text-3xl uppercase tracking-[0.08em]">
             {product ? "Edit Product" : "Add Product"}
           </DialogTitle>
           <DialogDescription>
-            Upload images, set inventory, and publish products without touching code.
+            Upload images and videos, set preorder and featured homepage rules, and publish products without touching code.
           </DialogDescription>
         </DialogHeader>
 
@@ -255,94 +286,89 @@ export function ProductFormDialog({
             </div>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-3">
-            <div className="rounded-2xl border border-border/70 bg-background/40 p-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-medium">Visible on site</p>
-                  <p className="text-xs text-muted-foreground">Turn off to hide the product.</p>
-                </div>
-                <Switch
-                  checked={values.isActive}
-                  onCheckedChange={(checked) => setValues((current) => ({ ...current, isActive: checked }))}
-                />
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-border/70 bg-background/40 p-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-medium">Mark sold out</p>
-                  <p className="text-xs text-muted-foreground">Keep it visible but unavailable.</p>
-                </div>
-                <Switch
-                  checked={values.isSoldOut}
-                  onCheckedChange={(checked) => setValues((current) => ({ ...current, isSoldOut: checked }))}
-                />
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-border/70 bg-background/40 p-4">
-              <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Storefront badge</p>
-              <p className="mt-2 font-display text-2xl uppercase tracking-[0.08em] text-bone">
-                {previewBadge ?? "Live"}
-              </p>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <Label htmlFor="images">Product images</Label>
-            <label
-              htmlFor="images"
-              className="flex cursor-pointer items-center justify-center gap-3 rounded-3xl border border-dashed border-border/70 bg-background/30 px-5 py-10 text-center transition-colors hover:border-blood/60 hover:bg-background/50"
-            >
-              <ImagePlus className="h-5 w-5 text-blood" />
-              <div>
-                <p className="text-sm font-medium">Upload multiple images</p>
-                <p className="text-xs text-muted-foreground">PNG, JPG, or WEBP. Front, back, details, lifestyle.</p>
-              </div>
-            </label>
-            <Input
-              id="images"
-              type="file"
-              multiple
-              accept="image/*"
-              className="hidden"
-              onChange={(event) => handleFileChange(event.target.files)}
+          <div className="grid gap-6 md:grid-cols-4">
+            <ToggleCard
+              title="Visible on site"
+              description="Turn off to hide the product."
+              checked={values.isActive}
+              onCheckedChange={(checked) => setValues((current) => ({ ...current, isActive: checked }))}
             />
-
-            {(existingImages.length > 0 || newFiles.length > 0) && (
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                {existingImages.map((image) => (
-                  <div key={image.id} className="overflow-hidden rounded-3xl border border-border/70 bg-background/40">
-                    <img src={image.imageUrl} alt="" className="aspect-square w-full object-cover" />
-                    <button
-                      type="button"
-                      onClick={() => handleExistingImageRemove(image)}
-                      className="flex w-full items-center justify-center gap-2 border-t border-border/70 px-3 py-3 text-sm text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      Remove
-                    </button>
-                  </div>
-                ))}
-
-                {newFiles.map((file) => (
-                  <div key={file.previewUrl} className="overflow-hidden rounded-3xl border border-border/70 bg-background/40">
-                    <img src={file.previewUrl} alt="" className="aspect-square w-full object-cover" />
-                    <button
-                      type="button"
-                      onClick={() => handleNewFileRemove(file)}
-                      className="flex w-full items-center justify-center gap-2 border-t border-border/70 px-3 py-3 text-sm text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      Remove
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
+            <ToggleCard
+              title="Mark sold out"
+              description="Keep it visible but unavailable."
+              checked={values.isSoldOut}
+              onCheckedChange={(checked) => setValues((current) => ({ ...current, isSoldOut: checked }))}
+            />
+            <ToggleCard
+              title="Enable preorder"
+              description="Let customers buy before inventory lands."
+              checked={values.isPreorder}
+              onCheckedChange={(checked) => setValues((current) => ({ ...current, isPreorder: checked }))}
+            />
+            <ToggleCard
+              title="Featured Homepage Product"
+              description="Use this tee in the homepage hero."
+              checked={values.featuredHomepage}
+              onCheckedChange={(checked) =>
+                setValues((current) => ({ ...current, featuredHomepage: checked }))
+              }
+            />
           </div>
+
+          <div className="rounded-2xl border border-border/70 bg-background/40 p-4">
+            <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Storefront badge</p>
+            <p className="mt-2 font-display text-2xl uppercase tracking-[0.08em] text-bone">
+              {previewBadge ?? "Live"}
+            </p>
+          </div>
+
+          <MediaUploader
+            id="images"
+            title="Product images"
+            icon={<ImagePlus className="h-5 w-5 text-blood" />}
+            description="PNG, JPG, or WEBP. Front, back, details, lifestyle."
+            accept="image/*"
+            existingItems={existingImages}
+            newItems={newFiles}
+            onExistingRemove={(item) => handleExistingImageRemove(item as ProductImage)}
+            onNewRemove={(item) => handleNewFileRemove(item, "image")}
+            onFilesChange={(files) => handleFileChange(files, "image")}
+            renderExisting={(item) => <img src={(item as ProductImage).imageUrl} alt="" className="aspect-square w-full object-cover" />}
+            renderNew={(item) => <img src={item.previewUrl} alt="" className="aspect-square w-full object-cover" />}
+          />
+
+          <MediaUploader
+            id="videos"
+            title="Product videos"
+            icon={<Video className="h-5 w-5 text-blood" />}
+            description="MP4 or MOV. These autoplay, loop, and stay muted on the product page."
+            accept="video/*"
+            existingItems={existingVideos}
+            newItems={newVideoFiles}
+            onExistingRemove={(item) => handleExistingVideoRemove(item as ProductVideo)}
+            onNewRemove={(item) => handleNewFileRemove(item, "video")}
+            onFilesChange={(files) => handleFileChange(files, "video")}
+            renderExisting={(item) => (
+              <video
+                src={(item as ProductVideo).videoUrl}
+                className="aspect-square w-full object-cover"
+                autoPlay
+                muted
+                loop
+                playsInline
+              />
+            )}
+            renderNew={(item) => (
+              <video
+                src={item.previewUrl}
+                className="aspect-square w-full object-cover"
+                autoPlay
+                muted
+                loop
+                playsInline
+              />
+            )}
+          />
 
           {errorMessage && (
             <div className="rounded-2xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
@@ -362,5 +388,106 @@ export function ProductFormDialog({
         </form>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function ToggleCard({
+  title,
+  description,
+  checked,
+  onCheckedChange,
+}: {
+  title: string;
+  description: string;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+}) {
+  return (
+    <div className="rounded-2xl border border-border/70 bg-background/40 p-4">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-sm font-medium">{title}</p>
+          <p className="text-xs text-muted-foreground">{description}</p>
+        </div>
+        <Switch checked={checked} onCheckedChange={onCheckedChange} />
+      </div>
+    </div>
+  );
+}
+
+function MediaUploader({
+  id,
+  title,
+  icon,
+  description,
+  accept,
+  existingItems,
+  newItems,
+  onExistingRemove,
+  onNewRemove,
+  onFilesChange,
+  renderExisting,
+  renderNew,
+}: {
+  id: string;
+  title: string;
+  icon: ReactNode;
+  description: string;
+  accept: string;
+  existingItems: unknown[];
+  newItems: PreviewFile[];
+  onExistingRemove: (item: unknown) => void;
+  onNewRemove: (item: PreviewFile) => void;
+  onFilesChange: (files: FileList | null) => void;
+  renderExisting: (item: unknown) => ReactNode;
+  renderNew: (item: PreviewFile) => ReactNode;
+}) {
+  return (
+    <div className="space-y-3">
+      <Label htmlFor={id}>{title}</Label>
+      <label
+        htmlFor={id}
+        className="flex cursor-pointer items-center justify-center gap-3 rounded-3xl border border-dashed border-border/70 bg-background/30 px-5 py-10 text-center transition-colors hover:border-blood/60 hover:bg-background/50"
+      >
+        {icon}
+        <div>
+          <p className="text-sm font-medium">Upload {title.toLowerCase()}</p>
+          <p className="text-xs text-muted-foreground">{description}</p>
+        </div>
+      </label>
+      <Input id={id} type="file" multiple accept={accept} className="hidden" onChange={(event) => onFilesChange(event.target.files)} />
+
+      {(existingItems.length > 0 || newItems.length > 0) && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {existingItems.map((item, index) => (
+            <div key={`existing-${index}`} className="overflow-hidden rounded-3xl border border-border/70 bg-background/40">
+              {renderExisting(item)}
+              <button
+                type="button"
+                onClick={() => onExistingRemove(item)}
+                className="flex w-full items-center justify-center gap-2 border-t border-border/70 px-3 py-3 text-sm text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+              >
+                <Trash2 className="h-4 w-4" />
+                Remove
+              </button>
+            </div>
+          ))}
+
+          {newItems.map((item) => (
+            <div key={item.previewUrl} className="overflow-hidden rounded-3xl border border-border/70 bg-background/40">
+              {renderNew(item)}
+              <button
+                type="button"
+                onClick={() => onNewRemove(item)}
+                className="flex w-full items-center justify-center gap-2 border-t border-border/70 px-3 py-3 text-sm text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+              >
+                <Trash2 className="h-4 w-4" />
+                Remove
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
