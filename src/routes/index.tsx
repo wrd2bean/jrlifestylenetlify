@@ -1,0 +1,165 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { SiteNav } from "@/components/site-nav";
+import { SiteFooter } from "@/components/site-footer";
+import { ProductCard } from "@/components/product-card";
+import { fetchStoreProducts, type StoreProduct } from "@/lib/catalog";
+import { DecorBg } from "@/components/decor-bg";
+import heroTee from "@/assets/tee-born-to-win.jpeg";
+
+export const Route = createFileRoute("/")({
+  loader: async () => ({
+    featured: await fetchStoreProducts(),
+  }),
+  component: Index,
+  head: () => ({
+    meta: [
+      { title: "JR Lifestyle — Born To Win Drop" },
+      {
+        name: "description",
+        content: "Premium streetwear from JR Lifestyle Clothing. Shop the Born To Win Drop — cards, dice, and the gamble of the come-up.",
+      },
+    ],
+  }),
+});
+
+function Index() {
+  const { featured }: { featured: StoreProduct[] } = Route.useLoaderData();
+
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      <SiteNav />
+
+      <div className="overflow-hidden border-b border-border/60 bg-background py-3">
+        <div className="flex w-max animate-marquee whitespace-nowrap font-display text-sm uppercase tracking-[0.3em] text-muted-foreground">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-8 pr-8">
+              <span>Drop 001 — Born To Win</span>
+              <span className="text-blood">✦</span>
+              <span>No Luck. All God.</span>
+              <span className="text-blood">✦</span>
+              <span>Get Rich Or Die Trying</span>
+              <span className="text-blood">✦</span>
+              <span>Limited Run</span>
+              <span className="text-blood">✦</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <section className="relative overflow-hidden border-b border-border/60">
+        <DecorBg />
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{ background: "var(--gradient-spotlight)" }}
+        />
+        <div className="relative mx-auto grid max-w-7xl gap-10 px-5 py-16 md:grid-cols-12 md:gap-6 md:py-24">
+          <div className="md:col-span-7">
+            <span className="inline-flex items-center gap-2 border border-border bg-card/50 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.25em] text-bone">
+              <span className="h-1.5 w-1.5 rounded-full bg-blood" /> Drop 001 — Live Now
+            </span>
+            <h1 className="mt-6 font-display text-[18vw] leading-[0.85] tracking-tight text-foreground md:text-[10rem]">
+              BORN
+              <br />
+              <span className="text-blood">TO</span> WIN
+            </h1>
+            <p className="mt-6 max-w-md text-base text-muted-foreground">
+              Cards on the table. Dice in the air. JR Lifestyle now runs on a live catalog, so every new drop can go from admin dashboard to storefront instantly.
+            </p>
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+              <Link
+                to="/drop"
+                className="bg-bone px-7 py-3.5 text-[11px] font-bold uppercase tracking-[0.25em] text-background transition-colors hover:bg-foreground"
+              >
+                Shop The Drop
+              </Link>
+              <Link
+                to="/admin"
+                className="border border-border px-7 py-3.5 text-[11px] font-bold uppercase tracking-[0.25em] text-foreground transition-colors hover:border-foreground"
+              >
+                Open Admin
+              </Link>
+            </div>
+            <div className="mt-10 flex items-center gap-8 text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+              <div>
+                <span className="block font-display text-2xl text-foreground">{featured.length}</span>
+                Live Styles
+              </div>
+              <div>
+                <span className="block font-display text-2xl text-foreground">DB</span>
+                Dynamic Data
+              </div>
+              <div>
+                <span className="block font-display text-2xl text-foreground">∞</span>
+                Mentality
+              </div>
+            </div>
+          </div>
+          <div className="relative md:col-span-5">
+            <div className="relative">
+              <div
+                className="absolute -inset-6 -z-10 blur-3xl"
+                style={{ background: "radial-gradient(circle, oklch(0.55 0.25 25 / 0.4), transparent 70%)" }}
+              />
+              <div className="relative overflow-hidden bg-card">
+                <img src={heroTee} alt="Born to Win flagship tee" className="h-full w-full object-cover" />
+              </div>
+              <span className="absolute -bottom-3 -left-3 bg-blood px-3 py-1.5 font-display text-xs uppercase tracking-[0.3em] text-primary-foreground">
+                Dynamic Catalog · No Rebuilds
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="border-b border-border/60 py-20">
+        <div className="mx-auto max-w-7xl px-5">
+          <div className="flex items-end justify-between">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-blood">The Drop</p>
+              <h2 className="mt-2 font-display text-5xl uppercase tracking-wider text-foreground md:text-6xl">
+                Born To Win <span className="font-script text-3xl text-bone">collection</span>
+              </h2>
+            </div>
+            <Link
+              to="/shop"
+              className="hidden text-[11px] font-bold uppercase tracking-[0.25em] text-muted-foreground hover:text-foreground md:block"
+            >
+              View All →
+            </Link>
+          </div>
+          <div className="mt-12 grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+            {featured.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="relative overflow-hidden border-b border-border/60 bg-card py-24">
+        <DecorBg />
+        <div className="relative mx-auto grid max-w-7xl gap-10 px-5 md:grid-cols-2 md:items-center">
+          <div>
+            <p className="font-script text-4xl text-bone">No Luck.</p>
+            <h2 className="mt-2 font-display text-6xl uppercase leading-none tracking-wider text-foreground md:text-8xl">
+              ALL <span className="text-blood">GOD.</span>
+            </h2>
+          </div>
+          <div className="space-y-4 text-base text-muted-foreground">
+            <p>JR Lifestyle is built for the late nights, the long odds, and the come-up that nobody saw coming.</p>
+            <p>
+              Every piece in this drop is heavy-weight cotton, oversized fit, and now managed through a beginner-friendly product dashboard backed by your database.
+            </p>
+            <Link
+              to="/about"
+              className="inline-block border-b border-bone pb-1 text-[11px] font-bold uppercase tracking-[0.25em] text-bone hover:border-foreground hover:text-foreground"
+            >
+              Read the Manifesto →
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <SiteFooter />
+    </div>
+  );
+}
