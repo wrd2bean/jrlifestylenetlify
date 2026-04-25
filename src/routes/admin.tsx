@@ -29,6 +29,7 @@ import {
   defaultStoreSettings,
   formatMoney,
   getPrimaryImage,
+  getPrimaryVideo,
   getProductBadge,
   getShortDescription,
   hasSupabaseEnv,
@@ -418,6 +419,16 @@ function AdminPage() {
                       <div className="bg-background/60">
                         {getPrimaryImage(product) ? (
                           <img src={getPrimaryImage(product)} alt={product.name} className="h-full min-h-52 w-full object-cover" />
+                        ) : getPrimaryVideo(product) ? (
+                          <video
+                            src={getPrimaryVideo(product)}
+                            aria-label={product.name}
+                            className="h-full min-h-52 w-full object-cover"
+                            autoPlay
+                            muted
+                            loop
+                            playsInline
+                          />
                         ) : (
                           <div className="flex min-h-52 items-center justify-center text-muted-foreground">No image</div>
                         )}

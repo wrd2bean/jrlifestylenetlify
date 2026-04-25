@@ -3,6 +3,7 @@ import {
   formatMoney,
   getPrimaryImage,
   getProductBadge,
+  getPrimaryVideo,
   getSecondaryImage,
   getShortDescription,
   type StoreProduct,
@@ -10,6 +11,9 @@ import {
 
 export function ProductCard({ product }: { product: StoreProduct }) {
   const badge = getProductBadge(product);
+  const primaryVideo = getPrimaryVideo(product);
+  const primaryImage = getPrimaryImage(product);
+  const secondaryImage = getSecondaryImage(product);
 
   return (
     <Link to="/product/$slug" params={{ slug: product.slug }} className="group block">
@@ -20,18 +24,32 @@ export function ProductCard({ product }: { product: StoreProduct }) {
           </span>
         )}
         <div className="relative aspect-square overflow-hidden">
-          <img
-            src={getPrimaryImage(product)}
-            alt={product.name}
-            className="h-full w-full object-cover transition-opacity duration-500 group-hover:opacity-0"
-            loading="lazy"
-          />
-          <img
-            src={getSecondaryImage(product)}
-            alt={`${product.name} alternate view`}
-            className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-            loading="lazy"
-          />
+          {primaryVideo ? (
+            <video
+              src={primaryVideo}
+              aria-label={product.name}
+              className="h-full w-full object-cover"
+              autoPlay
+              muted
+              loop
+              playsInline
+            />
+          ) : (
+            <>
+              <img
+                src={primaryImage}
+                alt={product.name}
+                className="h-full w-full object-cover transition-opacity duration-500 group-hover:opacity-0"
+                loading="lazy"
+              />
+              <img
+                src={secondaryImage}
+                alt={`${product.name} alternate view`}
+                className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+                loading="lazy"
+              />
+            </>
+          )}
         </div>
       </div>
       <div className="mt-4 flex items-start justify-between gap-3">

@@ -164,6 +164,35 @@ async function sendOrderConfirmationEmail({
   });
 }
 
+function createShippingOption({
+  amount,
+  displayName,
+  includeDeliveryEstimate,
+}: {
+  amount: number;
+  displayName: string;
+  includeDeliveryEstimate: boolean;
+}): Stripe.Checkout.SessionCreateParams.ShippingOption {
+  return {
+    shipping_rate_data: {
+      type: "fixed_amount",
+      fixed_amount: {
+        amount,
+        currency: "usd",
+      },
+      display_name: displayName,
+      ...(includeDeliveryEstimate
+        ? {
+            delivery_estimate: {
+              minimum: { unit: "business_day", value: 3 },
+              maximum: { unit: "business_day", value: 7 },
+            },
+          }
+        : {}),
+    },
+  };
+}
+
 export const createCheckoutSession = createServerFn({ method: "POST" })
   .inputValidator(checkoutInputSchema)
   .handler(async ({ data }) => {
@@ -211,6 +240,7 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
       0,
     );
     const preorder = orderItems.some((item) => item.preorder);
+    const hasInStockItems = orderItems.some((item) => !item.preorder);
     const orderNumber = createOrderNumber();
 
     const { data: orderInsert, error: orderInsertError } = await supabaseAdmin
@@ -232,43 +262,40 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
 
     const baseUrl = getBaseUrl();
     const shippingOptions: Stripe.Checkout.SessionCreateParams.ShippingOption[] = [];
+    const includeDeliveryEstimate = !preorder;
+    const freeShippingLabel = preorder
+      ? hasInStockItems
+        ? "Shipping Included — preorder items ship later"
+        : "Preorder Shipping Included — ships after release"
+      : "Free Shipping";
+    const paidShippingLabel = preorder
+      ? hasInStockItems
+        ? "Mixed Cart Shipping — some items ship later"
+        : "Preorder Shipping — ships after release"
+      : settings.freeShippingThreshold
+        ? `Flat Rate Shipping (free over $${settings.freeShippingThreshold})`
+        : "Flat Rate Shipping";
 
     if (
       settings.freeShippingThreshold !== null &&
       totalAmount >= settings.freeShippingThreshold
     ) {
-      shippingOptions.push({
-        shipping_rate_data: {
-          type: "fixed_amount",
-          fixed_amount: {
-            amount: 0,
-            currency: "usd",
-          },
-          display_name: "Free Shipping",
-          delivery_estimate: {
-            minimum: { unit: "business_day", value: 3 },
-            maximum: { unit: "business_day", value: 7 },
-          },
-        },
-      });
+      shippingOptions.push(
+        createShippingOption({
+          amount: 0,
+          displayName: freeShippingLabel,
+          includeDeliveryEstimate,
+        }),
+      );
     }
 
-    shippingOptions.push({
-      shipping_rate_data: {
-        type: "fixed_amount",
-        fixed_amount: {
-          amount: Math.round(settings.shippingFlatRate * 100),
-          currency: "usd",
-        },
-        display_name: settings.freeShippingThreshold
-          ? `Flat Rate Shipping (free over $${settings.freeShippingThreshold})`
-          : "Flat Rate Shipping",
-        delivery_estimate: {
-          minimum: { unit: "business_day", value: 3 },
-          maximum: { unit: "business_day", value: 7 },
-        },
-      },
-    });
+    shippingOptions.push(
+      createShippingOption({
+        amount: Math.round(settings.shippingFlatRate * 100),
+        displayName: paidShippingLabel,
+        includeDeliveryEstimate,
+      }),
+    );
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",

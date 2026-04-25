@@ -149,6 +149,7 @@ Supported checkout behavior:
 - automatic tax toggle from store settings
 - flat-rate shipping
 - optional free shipping threshold
+- preorder-aware shipping labels for preorder and mixed carts
 - promo code field when enabled in admin settings
 - preorder items can still be purchased
 

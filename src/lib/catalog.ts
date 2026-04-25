@@ -154,6 +154,10 @@ export function getPrimaryImage(product: StoreProduct) {
   return product.images[0]?.imageUrl ?? "";
 }
 
+export function getPrimaryVideo(product: StoreProduct) {
+  return product.videos[0]?.videoUrl ?? "";
+}
+
 export function getSecondaryImage(product: StoreProduct) {
   return product.images[1]?.imageUrl ?? product.images[0]?.imageUrl ?? "";
 }

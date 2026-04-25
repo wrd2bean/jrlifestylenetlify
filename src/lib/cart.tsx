@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { type ReactNode, createContext, useContext, useEffect, useMemo, useState } from "react";
 
 export type CartItem = {
   id: string;
@@ -33,7 +33,7 @@ function createCartItemId(productId: string, selectedSize: string, selectedColor
   return [productId, selectedSize, selectedColor, isPreorder ? "preorder" : "instock"].join("::");
 }
 
-export function CartProvider({ children }: { children: React.ReactNode }) {
+export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
 
   useEffect(() => {

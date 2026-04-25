@@ -34,9 +34,17 @@ function CartPage() {
   const { items, subtotal, updateQuantity, removeItem } = useCart();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const hasPreorderItems = items.some((item) => item.isPreorder);
+  const hasInStockItems = items.some((item) => !item.isPreorder);
   const estimatedTaxes = getEstimatedTaxes(subtotal, settings);
   const shippingEstimate = getShippingEstimate(subtotal, settings);
   const estimatedTotal = subtotal + estimatedTaxes + shippingEstimate;
+  const shippingLabel = hasPreorderItems ? "Shipping" : "Shipping Estimate";
+  const shippingMessage = hasPreorderItems
+    ? hasInStockItems
+      ? "Your order includes preorder items. Some items may ship later."
+      : "Preorder items ship after release. Estimated shipping applies after the preorder is ready."
+    : settings.deliveryNotes;
 
   async function handleCheckout() {
     setIsCheckingOut(true);
@@ -144,9 +152,9 @@ function CartPage() {
               <p className="font-display text-3xl uppercase tracking-[0.08em]">Summary</p>
               <SummaryRow label="Subtotal" value={formatMoney(subtotal)} />
               <SummaryRow label="Estimated Taxes" value={formatMoney(estimatedTaxes)} />
-              <SummaryRow label="Shipping Estimate" value={formatMoney(shippingEstimate)} />
+              <SummaryRow label={shippingLabel} value={formatMoney(shippingEstimate)} />
               <p className="text-xs text-muted-foreground">
-                {settings.deliveryNotes}
+                {shippingMessage}
               </p>
               <div className="border-t border-border/70 pt-4">
                 <SummaryRow label="Estimated Total" value={formatMoney(estimatedTotal)} emphasis />
