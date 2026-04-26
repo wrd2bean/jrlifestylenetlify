@@ -14,6 +14,7 @@ export type Database = {
     Tables: {
       orders: {
         Row: {
+          checkout_fingerprint: string | null;
           created_at: string;
           customer_email: string;
           customer_name: string;
@@ -29,6 +30,7 @@ export type Database = {
           total_amount: number;
         };
         Insert: {
+          checkout_fingerprint?: string | null;
           created_at?: string;
           customer_email?: string;
           customer_name?: string;
@@ -44,6 +46,7 @@ export type Database = {
           total_amount: number;
         };
         Update: {
+          checkout_fingerprint?: string | null;
           created_at?: string;
           customer_email?: string;
           customer_name?: string;
@@ -253,7 +256,7 @@ export type Database = {
     };
     Enums: {
       app_role: "admin" | "employee";
-      order_status: "paid" | "processing" | "shipped" | "delivered" | "canceled";
+      order_status: "draft" | "paid" | "processing" | "shipped" | "delivered" | "canceled";
       product_status: "active" | "sold_out" | "draft";
     };
     CompositeTypes: {
@@ -382,7 +385,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "employee"],
-      order_status: ["paid", "processing", "shipped", "delivered", "canceled"],
+      order_status: ["draft", "paid", "processing", "shipped", "delivered", "canceled"],
       product_status: ["active", "sold_out", "draft"],
     },
   },

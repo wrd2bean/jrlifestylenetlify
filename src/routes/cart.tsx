@@ -31,7 +31,7 @@ export const Route = createFileRoute("/cart")({
 function CartPage() {
   const navigate = useNavigate();
   const { settings }: { settings: StoreSettings } = Route.useLoaderData();
-  const { items, subtotal, updateQuantity, removeItem } = useCart();
+  const { items, checkoutToken, subtotal, updateQuantity, removeItem } = useCart();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const hasPreorderItems = items.some((item) => item.isPreorder);
@@ -59,6 +59,7 @@ function CartPage() {
             selectedSize: item.selectedSize,
             selectedColor: item.selectedColor,
           })),
+          checkoutToken,
         },
       });
 
@@ -75,7 +76,7 @@ function CartPage() {
       <section className="border-b border-border/60 py-16">
         <div className="mx-auto max-w-7xl px-5">
           <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-blood">Shopping Cart</p>
-          <h1 className="mt-2 font-display text-6xl uppercase tracking-wider md:text-8xl">Your Bag</h1>
+          <h1 className="mt-2 font-display text-5xl uppercase tracking-wider md:text-8xl">Your Bag</h1>
         </div>
       </section>
 
@@ -93,9 +94,27 @@ function CartPage() {
               </Card>
             ) : (
               items.map((item) => (
-                <Card key={item.id} className="border-border/70 bg-card/80">
+                <Card key={item.id} className="overflow-hidden border-border/70 bg-card/80">
                   <CardContent className="grid gap-4 p-4 sm:grid-cols-[140px_1fr]">
-                    <img src={item.imageUrl} alt={item.name} className="aspect-square w-full object-cover" />
+                    <div className="overflow-hidden rounded-2xl bg-background/60">
+                      {item.videoUrl ? (
+                        <video
+                          src={item.videoUrl}
+                          aria-label={item.name}
+                          className="aspect-square w-full object-cover"
+                          autoPlay
+                          muted
+                          loop
+                          playsInline
+                        />
+                      ) : item.imageUrl ? (
+                        <img src={item.imageUrl} alt={item.name} className="aspect-square w-full object-cover" />
+                      ) : (
+                        <div className="flex aspect-square items-center justify-center text-[11px] font-bold uppercase tracking-[0.22em] text-muted-foreground">
+                          JR Lifestyle
+                        </div>
+                      )}
+                    </div>
                     <div className="flex flex-col justify-between gap-4">
                       <div className="flex items-start justify-between gap-4">
                         <div>
@@ -113,11 +132,11 @@ function CartPage() {
                       </div>
 
                       <div className="flex flex-wrap items-center justify-between gap-4">
-                        <div className="inline-flex items-center border border-border/70">
+                        <div className="inline-flex items-center rounded-2xl border border-border/70 bg-background/50">
                           <button
                             type="button"
                             onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                            className="px-4 py-3 text-foreground"
+                            className="min-h-12 px-4 py-3 text-foreground transition-colors hover:text-bone"
                           >
                             <Minus className="h-4 w-4" />
                           </button>
@@ -125,7 +144,7 @@ function CartPage() {
                           <button
                             type="button"
                             onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                            className="px-4 py-3 text-foreground"
+                            className="min-h-12 px-4 py-3 text-foreground transition-colors hover:text-bone"
                           >
                             <Plus className="h-4 w-4" />
                           </button>
@@ -147,7 +166,7 @@ function CartPage() {
             )}
           </div>
 
-          <Card className="h-fit border-border/70 bg-card/80">
+          <Card className="h-fit border-border/70 bg-card/80 lg:sticky lg:top-24">
             <CardContent className="space-y-4 p-6">
               <p className="font-display text-3xl uppercase tracking-[0.08em]">Summary</p>
               <SummaryRow label="Subtotal" value={formatMoney(subtotal)} />
@@ -167,7 +186,7 @@ function CartPage() {
               <Button
                 onClick={handleCheckout}
                 disabled={items.length === 0 || isCheckingOut}
-                className="w-full bg-blood text-white hover:bg-blood/90"
+                className="min-h-12 w-full rounded-2xl bg-blood text-white transition-transform duration-200 hover:scale-[1.01] hover:bg-blood/90"
               >
                 {isCheckingOut && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
                 Checkout With Stripe

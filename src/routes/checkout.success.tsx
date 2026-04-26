@@ -53,7 +53,7 @@ function CheckoutSuccessPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteNav />
-      <div className="mx-auto max-w-3xl px-5 py-24 text-center">
+      <div className="mx-auto max-w-3xl px-5 py-20 text-center sm:py-24">
         {isLoading ? (
           <div className="space-y-4">
             <LoaderCircle className="mx-auto h-8 w-8 animate-spin text-blood" />
@@ -69,7 +69,7 @@ function CheckoutSuccessPage() {
             <CheckCircle2 className="mx-auto h-14 w-14 text-bone" />
             <div>
               <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-blood">Order Confirmed</p>
-              <h1 className="mt-3 font-display text-6xl uppercase tracking-[0.08em]">Thank You</h1>
+              <h1 className="mt-3 font-display text-5xl uppercase tracking-[0.08em] sm:text-6xl">Thank You</h1>
             </div>
             <p className="text-muted-foreground">
               Your order was paid successfully{orderNumber ? ` and saved as ${orderNumber}` : ""}.
@@ -77,13 +77,13 @@ function CheckoutSuccessPage() {
             <div className="flex flex-wrap justify-center gap-3">
               <Link
                 to="/shop"
-                className="bg-bone px-7 py-3.5 text-[11px] font-bold uppercase tracking-[0.25em] text-background transition-colors hover:bg-foreground"
+                className="min-h-12 rounded-2xl bg-bone px-7 py-3.5 text-[11px] font-bold uppercase tracking-[0.25em] text-background transition-transform duration-200 hover:scale-[1.01] hover:bg-foreground"
               >
                 Continue Shopping
               </Link>
               <Link
                 to="/"
-                className="border border-border px-7 py-3.5 text-[11px] font-bold uppercase tracking-[0.25em] text-foreground transition-colors hover:border-foreground"
+                className="min-h-12 rounded-2xl border border-border px-7 py-3.5 text-[11px] font-bold uppercase tracking-[0.25em] text-foreground transition-colors hover:border-foreground"
               >
                 Back Home
               </Link>

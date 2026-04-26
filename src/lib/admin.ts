@@ -9,6 +9,7 @@ import {
   mapProfileRow,
   slugifyProductName,
   type AdminProfile,
+  type PaymentStatus,
   type OrderRecord,
   type OrderStatus,
   type ProductImage,
@@ -168,6 +169,18 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus) {
   ensureSupabaseConfigured();
 
   const { error } = await supabase.from("orders").update({ status }).eq("id", orderId);
+  if (error) throw error;
+}
+
+export async function updateOrderPaymentStatus(orderId: string, paymentStatus: PaymentStatus) {
+  ensureSupabaseConfigured();
+
+  const nextStatus: OrderStatus =
+    paymentStatus === "paid" ? "paid" : paymentStatus === "canceled" ? "canceled" : "draft";
+  const { error } = await supabase
+    .from("orders")
+    .update({ payment_status: paymentStatus, status: nextStatus })
+    .eq("id", orderId);
   if (error) throw error;
 }
 

@@ -18,7 +18,7 @@ function ContactPage() {
   return (
     <div className="min-h-screen bg-background">
       <SiteNav />
-      <section className="relative overflow-hidden border-b border-border/60 py-20">
+      <section className="relative overflow-hidden border-b border-border/60 py-16 sm:py-20">
         <DecorBg />
         <div className="relative mx-auto max-w-3xl px-5 text-center">
           <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-blood">Get In Touch</p>
@@ -32,13 +32,13 @@ function ContactPage() {
       </section>
 
       <section className="py-16">
-        <div className="mx-auto grid max-w-5xl gap-10 px-5 md:grid-cols-3">
+        <div className="mx-auto grid max-w-5xl gap-5 px-5 md:grid-cols-3 md:gap-10">
           {[
             { Icon: Mail, label: "Email", value: "hello@jrlifestyle.com" },
             { Icon: Instagram, label: "Instagram", value: "@jrlifestyle" },
             { Icon: MessageCircle, label: "Support", value: "support@jrlifestyle.com" },
           ].map(({ Icon, label, value }) => (
-            <div key={label} className="border border-border bg-card p-6 text-center">
+            <div key={label} className="rounded-[1.5rem] border border-border/60 bg-card p-6 text-center shadow-[0_20px_50px_-38px_rgba(0,0,0,0.9)]">
               <Icon className="mx-auto h-6 w-6 text-bone" />
               <p className="mt-4 text-[10px] font-bold uppercase tracking-[0.3em] text-muted-foreground">{label}</p>
               <p className="mt-2 text-foreground">{value}</p>
@@ -52,26 +52,26 @@ function ContactPage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <input
                 placeholder="Name"
-                className="border border-border bg-transparent px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-bone focus:outline-none"
+                className="min-h-12 rounded-2xl border border-border bg-transparent px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-bone focus:outline-none"
               />
               <input
                 type="email"
                 placeholder="Email"
-                className="border border-border bg-transparent px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-bone focus:outline-none"
+                className="min-h-12 rounded-2xl border border-border bg-transparent px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-bone focus:outline-none"
               />
             </div>
             <input
               placeholder="Subject"
-              className="w-full border border-border bg-transparent px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-bone focus:outline-none"
+              className="min-h-12 w-full rounded-2xl border border-border bg-transparent px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-bone focus:outline-none"
             />
             <textarea
               rows={6}
               placeholder="Your message…"
-              className="w-full border border-border bg-transparent px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-bone focus:outline-none"
+              className="w-full rounded-2xl border border-border bg-transparent px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-bone focus:outline-none"
             />
             <button
               type="button"
-              className="bg-bone px-8 py-4 text-[11px] font-bold uppercase tracking-[0.3em] text-background hover:bg-foreground transition-colors"
+              className="min-h-12 rounded-2xl bg-bone px-8 py-4 text-[11px] font-bold uppercase tracking-[0.3em] text-background transition-transform duration-200 hover:scale-[1.01] hover:bg-foreground"
             >
               Send Message
             </button>

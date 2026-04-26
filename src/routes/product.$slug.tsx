@@ -14,6 +14,8 @@ import {
   getProductBadge,
   getProductMedia,
   getPurchaseButtonLabel,
+  getPrimaryImage,
+  getPrimaryVideo,
   type ProductMedia,
   type StoreProduct,
 } from "@/lib/catalog";
@@ -77,7 +79,8 @@ function ProductPage() {
       productId: product.id,
       slug: product.slug,
       name: product.name,
-      imageUrl: product.images[0]?.imageUrl ?? "",
+      imageUrl: getPrimaryImage(product),
+      videoUrl: getPrimaryVideo(product),
       price: product.price,
       selectedSize,
       selectedColor,
@@ -96,31 +99,36 @@ function ProductPage() {
       <section className="border-b border-border/60">
         <div className="mx-auto grid max-w-7xl gap-10 px-5 py-12 md:grid-cols-2 md:gap-16">
           <div>
-            <div className="relative bg-card">
+            <div className="relative overflow-hidden rounded-[1.75rem] border border-border/60 bg-card shadow-[0_22px_80px_-40px_rgba(0,0,0,0.85)]">
               {activeMedia?.type === "video" ? (
                 <video
                   src={activeMedia.url}
-                  className="h-full w-full object-cover"
+                  className="aspect-square h-full w-full object-cover"
                   autoPlay
                   muted
                   loop
                   playsInline
                 />
+              ) : activeMedia?.url ? (
+                <img src={activeMedia.url} alt={product.name} className="aspect-square h-full w-full object-cover" />
               ) : (
-                <img src={activeMedia?.url} alt={product.name} className="h-full w-full object-cover" />
+                <div className="flex aspect-square items-center justify-center text-sm uppercase tracking-[0.2em] text-muted-foreground">
+                  Media coming soon
+                </div>
               )}
               {badge && (
-                <span className="absolute left-4 top-4 bg-bone px-2 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-background">
+                <span className="absolute left-4 top-4 rounded-full bg-bone px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-background">
                   {badge}
                 </span>
               )}
             </div>
-            <div className="mt-3 grid grid-cols-2 gap-3">
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
               {media.map((item, index) => (
                 <button
                   key={item.id}
+                  type="button"
                   onClick={() => setActiveMedia(item)}
-                  className={`relative aspect-square overflow-hidden border ${activeMedia?.id === item.id ? "border-bone" : "border-border"}`}
+                  className={`relative aspect-square overflow-hidden rounded-2xl border transition-transform duration-200 hover:scale-[1.01] ${activeMedia?.id === item.id ? "border-bone" : "border-border"}`}
                 >
                   {item.type === "video" ? (
                     <video src={item.url} className="h-full w-full object-cover" autoPlay muted loop playsInline />
@@ -137,10 +145,10 @@ function ProductPage() {
 
           <div className="flex flex-col justify-center">
             <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-blood">{product.category}</p>
-            <h1 className="mt-2 font-display text-5xl uppercase tracking-wider text-foreground md:text-6xl">
+            <h1 className="mt-2 font-display text-4xl uppercase tracking-wider text-foreground sm:text-5xl md:text-6xl">
               {product.name}
             </h1>
-            <p className="mt-3 text-muted-foreground">{product.description}</p>
+            <p className="mt-4 max-w-xl text-base leading-7 text-muted-foreground">{product.description}</p>
             <p className="mt-6 font-display text-3xl text-bone">{formatMoney(product.price)}</p>
 
             <div className="mt-8">
@@ -150,16 +158,16 @@ function ProductPage() {
                   Size Guide
                 </Link>
               </div>
-              <div className="mt-3 flex flex-wrap gap-2">
+              <div className="mt-3 flex flex-wrap gap-2.5">
                 {product.sizes.map((size) => (
                   <button
                     key={size}
                     type="button"
                     onClick={() => setSelectedSize(size)}
-                    className={`border px-5 py-3 text-sm font-semibold ${
+                    className={`min-h-12 rounded-2xl border px-5 py-3 text-sm font-semibold transition-all ${
                       selectedSize === size
                         ? "border-bone bg-bone text-background"
-                        : "border-border/70 bg-black/70 text-foreground"
+                        : "border-border/70 bg-black/70 text-foreground hover:border-foreground/70"
                     }`}
                   >
                     {size}
@@ -170,16 +178,16 @@ function ProductPage() {
 
             <div className="mt-8">
               <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-foreground">Colors</p>
-              <div className="mt-3 flex flex-wrap gap-2">
+              <div className="mt-3 flex flex-wrap gap-2.5">
                 {product.colors.map((color) => (
                   <button
                     key={color}
                     type="button"
                     onClick={() => setSelectedColor(color)}
-                    className={`border px-5 py-3 text-sm font-semibold ${
+                    className={`min-h-12 rounded-2xl border px-5 py-3 text-sm font-semibold transition-all ${
                       selectedColor === color
                         ? "border-bone bg-bone text-background"
-                        : "border-border/70 bg-black/70 text-foreground"
+                        : "border-border/70 bg-black/70 text-foreground hover:border-foreground/70"
                     }`}
                   >
                     {color}
@@ -190,11 +198,11 @@ function ProductPage() {
 
             <div className="mt-8">
               <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-foreground">Quantity</p>
-              <div className="mt-3 inline-flex items-center border border-border/70">
+              <div className="mt-3 inline-flex items-center rounded-2xl border border-border/70 bg-card/70">
                 <button
                   type="button"
                   onClick={() => setQuantity((current) => Math.max(1, current - 1))}
-                  className="px-4 py-3 text-foreground"
+                  className="min-h-12 px-4 py-3 text-foreground transition-colors hover:text-bone"
                 >
                   <Minus className="h-4 w-4" />
                 </button>
@@ -202,7 +210,7 @@ function ProductPage() {
                 <button
                   type="button"
                   onClick={() => setQuantity((current) => Math.min(10, current + 1))}
-                  className="px-4 py-3 text-foreground"
+                  className="min-h-12 px-4 py-3 text-foreground transition-colors hover:text-bone"
                 >
                   <Plus className="h-4 w-4" />
                 </button>
@@ -213,7 +221,7 @@ function ProductPage() {
               type="button"
               onClick={handleAddToCart}
               disabled={!canPurchase}
-              className="mt-8 h-auto bg-bone px-8 py-4 text-[11px] font-bold uppercase tracking-[0.3em] text-background hover:bg-foreground"
+              className="mt-8 min-h-14 rounded-2xl bg-bone px-8 py-4 text-[11px] font-bold uppercase tracking-[0.3em] text-background transition-transform duration-200 hover:scale-[1.01] hover:bg-foreground"
             >
               {getPurchaseButtonLabel(product)}
             </Button>
@@ -225,7 +233,7 @@ function ProductPage() {
               </p>
             )}
 
-            <div className="mt-10 space-y-3 border-t border-border/60 pt-6 text-sm text-muted-foreground">
+            <div className="mt-10 space-y-3 border-t border-border/60 pt-6 text-sm leading-6 text-muted-foreground">
               <p>· Stock available: {product.stockQuantity}</p>
               <p>· Colors: {product.colors.join(", ") || "Not listed"}</p>
               <p>· Sizes: {product.sizes.join(", ") || "Not listed"}</p>
@@ -239,7 +247,7 @@ function ProductPage() {
       <section className="py-20">
         <div className="mx-auto max-w-7xl px-5">
           <h2 className="font-display text-3xl uppercase tracking-wider text-foreground">More From The Drop</h2>
-          <div className="mt-10 grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-10 grid gap-x-4 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 lg:gap-x-6 lg:gap-y-12">
             {others.map((entry) => (
               <ProductCard key={entry.id} product={entry} />
             ))}

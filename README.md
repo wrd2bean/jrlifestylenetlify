@@ -80,6 +80,10 @@ Open Supabase SQL Editor and run:
 
 `supabase/migrations/20260424_ecommerce_checkout.sql`
 
+Then run:
+
+`supabase/migrations/20260426_order_lifecycle_cleanup.sql`
+
 This creates or updates:
 
 - `profiles`
@@ -152,6 +156,7 @@ Supported checkout behavior:
 - preorder-aware shipping labels for preorder and mixed carts
 - promo code field when enabled in admin settings
 - preorder items can still be purchased
+- repeated checkout attempts from the same bag reuse the existing pending order instead of creating duplicate draft records
 
 ## 9. How orders are saved
 
@@ -169,6 +174,7 @@ When checkout starts, the app creates a draft order row in Supabase. After Strip
 - preorder flag
 
 Paid Stripe orders then appear automatically in the admin orders table.
+Pending checkout attempts stay in draft/pending state and can be reviewed separately in the admin order filters.
 
 ## 10. Optional customer email confirmations
 

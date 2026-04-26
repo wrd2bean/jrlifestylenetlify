@@ -23,6 +23,7 @@ import {
   saveStoreSettings,
   signInAdmin,
   signOutAdmin,
+  updateOrderPaymentStatus,
   updateOrderStatus,
 } from "@/lib/admin";
 import {
@@ -33,6 +34,7 @@ import {
   getProductBadge,
   getShortDescription,
   hasSupabaseEnv,
+  type PaymentStatus,
   type OrderRecord,
   type OrderStatus,
   type StoreProduct,
@@ -68,6 +70,7 @@ function AdminPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [orderFilter, setOrderFilter] = useState("paid");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
@@ -88,7 +91,16 @@ function AdminPage() {
     const matchesCategory = categoryFilter === "all" || product.category === categoryFilter;
     return matchesSearch && matchesStatus && matchesCategory;
   });
-  const visibleOrders = orders.filter((order) => order.paymentStatus === "paid");
+  const visibleOrders = orders.filter((order) => {
+    if (orderFilter === "all") return true;
+    if (orderFilter === "paid") return order.paymentStatus === "paid";
+    if (orderFilter === "pending") return order.paymentStatus === "pending";
+    if (orderFilter === "draft") return order.status === "draft";
+    if (orderFilter === "canceled") {
+      return order.status === "canceled" || order.paymentStatus === "canceled";
+    }
+    return true;
+  });
 
   async function loadDashboard() {
     setIsRefreshing(true);
@@ -199,6 +211,15 @@ function AdminPage() {
       await loadDashboard();
     } catch (error) {
       setDashboardError(error instanceof Error ? error.message : "Unable to update order status.");
+    }
+  }
+
+  async function handleOrderPaymentStatusChange(orderId: string, paymentStatus: PaymentStatus) {
+    try {
+      await updateOrderPaymentStatus(orderId, paymentStatus);
+      await loadDashboard();
+    } catch (error) {
+      setDashboardError(error instanceof Error ? error.message : "Unable to update payment status.");
     }
   }
 
@@ -485,6 +506,30 @@ function AdminPage() {
 
           <TabsContent value="orders">
             <Card className="border-border/70 bg-card/80">
+              <CardContent className="border-b border-border/70 p-5">
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <p className="font-display text-3xl uppercase tracking-[0.08em]">Orders</p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Paid orders show by default. Use filters to review pending, draft, or canceled checkout attempts.
+                    </p>
+                  </div>
+                  <div className="w-full md:w-[220px]">
+                    <Select value={orderFilter} onValueChange={setOrderFilter}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Filter orders" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="paid">Paid Orders</SelectItem>
+                        <SelectItem value="pending">Pending Checkouts</SelectItem>
+                        <SelectItem value="draft">Draft Orders</SelectItem>
+                        <SelectItem value="canceled">Canceled Orders</SelectItem>
+                        <SelectItem value="all">All Orders</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
               <CardContent className="p-0">
                 <Table>
                   <TableHeader>
@@ -501,7 +546,9 @@ function AdminPage() {
                     {visibleOrders.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={6} className="py-10 text-center text-sm text-muted-foreground">
-                          Paid Stripe orders will appear here automatically after checkout succeeds.
+                          {orderFilter === "paid"
+                            ? "Paid Stripe orders will appear here automatically after checkout succeeds."
+                            : "No orders match this filter yet."}
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -523,17 +570,27 @@ function AdminPage() {
                         </TableCell>
                         <TableCell>
                           <div>
-                            <p className="uppercase">{order.paymentStatus}</p>
-                            <p className="text-xs text-muted-foreground">{order.stripePaymentIntentId || "No payment id yet"}</p>
+                            <Select value={order.paymentStatus} onValueChange={(value) => void handleOrderPaymentStatusChange(order.id, value as PaymentStatus)}>
+                              <SelectTrigger className="w-[160px]">
+                                <SelectValue placeholder="Payment" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="pending">Pending</SelectItem>
+                                <SelectItem value="paid">Paid</SelectItem>
+                                <SelectItem value="canceled">Canceled</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <p className="mt-2 text-xs text-muted-foreground">{order.stripePaymentIntentId || "No payment id yet"}</p>
                           </div>
                         </TableCell>
                         <TableCell>{order.preorder ? "Preorder" : "Standard"}</TableCell>
                         <TableCell>
                           <Select value={order.status} onValueChange={(value) => void handleOrderStatusChange(order.id, value as OrderStatus)}>
                             <SelectTrigger className="w-[150px]">
-                              <SelectValue placeholder="Status" />
+                            <SelectValue placeholder="Status" />
                             </SelectTrigger>
                             <SelectContent>
+                              <SelectItem value="draft">Draft</SelectItem>
                               <SelectItem value="paid">Paid</SelectItem>
                               <SelectItem value="processing">Processing</SelectItem>
                               <SelectItem value="shipped">Shipped</SelectItem>

@@ -78,7 +78,7 @@ function Index() {
             </h1>
             <p className="mt-6 max-w-md text-base text-muted-foreground">
               {homepageFeatured?.description ??
-                "JR Lifestyle now runs on a live catalog, so every new drop can go from the backend to the storefront instantly."}
+                "Heavyweight streetwear for the ones who move with faith, pressure, and a winning mindset."}
             </p>
             {homepageFeatured && (
               <p className="mt-5 font-display text-3xl uppercase tracking-[0.08em] text-bone">
@@ -103,14 +103,14 @@ function Index() {
                 </Link>
               )}
             </div>
-            <div className="mt-10 flex items-center gap-8 text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+            <div className="mt-10 grid max-w-md grid-cols-3 gap-4 text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
               <div>
                 <span className="block font-display text-2xl text-foreground">{products.length}</span>
-                Live Styles
+                Styles
               </div>
               <div>
-                <span className="block font-display text-2xl text-foreground">DB</span>
-                Dynamic Data
+                <span className="block font-display text-2xl text-foreground">FW</span>
+                Faith Wins
               </div>
               <div>
                 <span className="block font-display text-2xl text-foreground">∞</span>
@@ -143,32 +143,35 @@ function Index() {
                   />
                 )}
               </div>
-              <span className="absolute -bottom-3 -left-3 bg-blood px-3 py-1.5 font-display text-xs uppercase tracking-[0.3em] text-primary-foreground">
-                Featured Live · No Rebuilds
+              <span className="absolute -bottom-3 -left-3 rounded-full bg-blood px-3 py-1.5 font-display text-xs uppercase tracking-[0.3em] text-primary-foreground">
+                Featured Drop
               </span>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="border-b border-border/60 py-20">
+      <section className="border-b border-border/60 py-16 sm:py-20">
         <div className="mx-auto max-w-7xl px-5">
-          <div className="flex items-end justify-between">
+          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-blood">The Drop</p>
-              <h2 className="mt-2 font-display text-5xl uppercase tracking-wider text-foreground md:text-6xl">
+              <h2 className="mt-2 font-display text-4xl uppercase tracking-wider text-foreground sm:text-5xl md:text-6xl">
                 Born To Win <span className="font-script text-3xl text-bone">collection</span>
               </h2>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
+                Shop every tee in the drop right here. Oversized cuts, heavyweight cotton, and preorder pieces for the ones already moving like winners.
+              </p>
             </div>
             <Link
               to="/shop"
-              className="hidden text-[11px] font-bold uppercase tracking-[0.25em] text-muted-foreground hover:text-foreground md:block"
+              className="text-[11px] font-bold uppercase tracking-[0.25em] text-muted-foreground hover:text-foreground"
             >
               View All →
             </Link>
           </div>
-          <div className="mt-12 grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
-            {products.slice(0, 3).map((product) => (
+          <div className="mt-10 grid gap-x-4 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 lg:gap-x-6 lg:gap-y-12">
+            {products.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
@@ -187,7 +190,7 @@ function Index() {
           <div className="space-y-4 text-base text-muted-foreground">
             <p>JR Lifestyle is built for the late nights, the long odds, and the come-up that nobody saw coming.</p>
             <p>
-              Every piece in this drop is heavy-weight cotton, oversized fit, and now managed through a beginner-friendly product dashboard backed by your database and live checkout flow.
+              Every piece in this drop is heavyweight cotton, oversized by design, and made to wear like conviction. Clean lines, strong statements, and the kind of energy you bring when you already know how the story ends.
             </p>
             <Link
               to="/about"

@@ -38,10 +38,10 @@ function PolicyPage({
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteNav />
-      <div className="mx-auto max-w-4xl px-5 py-20">
+      <div className="mx-auto max-w-4xl px-5 py-16 sm:py-20">
         <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-blood">{kicker}</p>
-        <h1 className="mt-3 font-display text-6xl uppercase tracking-[0.08em]">{title}</h1>
-        <div className="mt-8 space-y-4 text-muted-foreground">
+        <h1 className="mt-3 font-display text-5xl uppercase tracking-[0.08em] sm:text-6xl">{title}</h1>
+        <div className="mt-8 space-y-4 text-base leading-7 text-muted-foreground">
           {body.map((paragraph) => (
             <p key={paragraph}>{paragraph}</p>
           ))}

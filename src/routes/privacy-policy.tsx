@@ -21,8 +21,8 @@ function PrivacyPolicyPage() {
         <h1 className="mt-3 font-display text-6xl uppercase tracking-[0.08em]">Privacy Policy</h1>
         <div className="mt-8 space-y-4 text-muted-foreground">
           <p>We collect information needed to process orders, improve the site, and provide customer support.</p>
-          <p>Payment details are processed securely by Stripe and are never stored directly in JR Lifestyle frontend code.</p>
-          <p>Order information may be stored in Supabase to manage fulfillment, support, and reporting.</p>
+          <p>Payment details are processed securely by trusted payment partners and are never stored directly on the storefront.</p>
+          <p>Order information is kept only as needed to fulfill purchases, provide support, and protect against fraud.</p>
         </div>
       </div>
       <SiteFooter />

@@ -1,4 +1,5 @@
 import Stripe from "stripe";
+import { createHash } from "node:crypto";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
@@ -15,6 +16,7 @@ const cartItemSchema = z.object({
 
 const checkoutInputSchema = z.object({
   items: z.array(cartItemSchema).min(1),
+  checkoutToken: z.string().min(1),
 });
 
 const finalizeInputSchema = z.object({
@@ -30,6 +32,12 @@ type CheckoutProduct = {
   is_preorder: boolean;
   status: "active" | "sold_out" | "draft";
   product_images?: Array<{ image_url: string }>;
+};
+
+type PendingOrderRow = {
+  id: string;
+  order_number: string;
+  stripe_checkout_session_id: string | null;
 };
 
 function getStripeClient() {
@@ -60,6 +68,12 @@ function getBaseUrl() {
 
 function createOrderNumber() {
   return `JR-${Date.now().toString().slice(-8)}`;
+}
+
+function createCheckoutFingerprint(checkoutToken: string, items: Json) {
+  return createHash("sha256")
+    .update(JSON.stringify({ checkoutToken, items }))
+    .digest("hex");
 }
 
 function parsePaymentIntentId(value: string | Stripe.PaymentIntent | null) {
@@ -241,24 +255,75 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
     );
     const preorder = orderItems.some((item) => item.preorder);
     const hasInStockItems = orderItems.some((item) => !item.preorder);
-    const orderNumber = createOrderNumber();
+    const checkoutFingerprint = createCheckoutFingerprint(data.checkoutToken, orderItems as Json);
 
-    const { data: orderInsert, error: orderInsertError } = await supabaseAdmin
+    const { data: existingPendingOrder, error: pendingOrderError } = await supabaseAdmin
       .from("orders")
-      .insert({
-        order_number: orderNumber,
-        customer_name: "",
-        customer_email: "",
-        total_amount: totalAmount,
-        items: orderItems as Json,
-        status: "paid",
-        payment_status: "unpaid",
-        preorder,
-      })
-      .select("id")
-      .single();
+      .select("id, order_number, stripe_checkout_session_id")
+      .eq("checkout_fingerprint", checkoutFingerprint)
+      .eq("payment_status", "pending")
+      .eq("status", "draft")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-    if (orderInsertError) throw new Error(orderInsertError.message);
+    if (pendingOrderError) throw new Error(pendingOrderError.message);
+
+    const reusableOrder = existingPendingOrder as PendingOrderRow | null;
+    let orderId = reusableOrder?.id ?? "";
+    let orderNumber = reusableOrder?.order_number ?? createOrderNumber();
+
+    if (reusableOrder?.stripe_checkout_session_id) {
+      try {
+        const existingSession = await stripe.checkout.sessions.retrieve(
+          reusableOrder.stripe_checkout_session_id,
+        );
+
+        if (existingSession.status === "open" && existingSession.payment_status !== "paid" && existingSession.url) {
+          return {
+            url: existingSession.url,
+            orderId: reusableOrder.id,
+          };
+        }
+      } catch {
+        // If the old session can't be reused, create a new one below.
+      }
+    }
+
+    if (!orderId) {
+      const { data: orderInsert, error: orderInsertError } = await supabaseAdmin
+        .from("orders")
+        .insert({
+          order_number: orderNumber,
+          customer_name: "",
+          customer_email: "",
+          total_amount: totalAmount,
+          items: orderItems as Json,
+          status: "draft",
+          payment_status: "pending",
+          preorder,
+          checkout_fingerprint: checkoutFingerprint,
+        })
+        .select("id")
+        .single();
+
+      if (orderInsertError) throw new Error(orderInsertError.message);
+      orderId = orderInsert.id;
+    } else {
+      const { error: refreshPendingError } = await supabaseAdmin
+        .from("orders")
+        .update({
+          total_amount: totalAmount,
+          items: orderItems as Json,
+          preorder,
+          payment_status: "pending",
+          status: "draft",
+          stripe_payment_intent_id: null,
+        })
+        .eq("id", orderId);
+
+      if (refreshPendingError) throw new Error(refreshPendingError.message);
+    }
 
     const baseUrl = getBaseUrl();
     const shippingOptions: Stripe.Checkout.SessionCreateParams.ShippingOption[] = [];
@@ -312,9 +377,10 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
       },
       shipping_options: shippingOptions,
       metadata: {
-        orderId: orderInsert.id,
+        orderId,
         orderNumber,
         deliveryNotes: settings.deliveryNotes,
+        checkoutFingerprint,
       },
       line_items: orderItems.map((item) => ({
         quantity: item.quantity,
@@ -338,8 +404,9 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
       .from("orders")
       .update({
         stripe_checkout_session_id: session.id,
+        stripe_payment_intent_id: parsePaymentIntentId(session.payment_intent),
       })
-      .eq("id", orderInsert.id);
+      .eq("id", orderId);
 
     if (updateError) throw new Error(updateError.message);
 
@@ -349,7 +416,7 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
 
     return {
       url: session.url,
-      orderId: orderInsert.id,
+      orderId,
     };
   });
 
@@ -385,8 +452,9 @@ export const finalizeCheckoutSession = createServerFn({ method: "POST" })
       };
     }
 
-    const paymentStatus = session.payment_status ?? "unpaid";
-    const orderStatus = "paid";
+    const isPaid = session.payment_status === "paid" || session.payment_status === "no_payment_required";
+    const paymentStatus = isPaid ? "paid" : "pending";
+    const orderStatus = isPaid ? "paid" : "draft";
     const customerDetails = session.customer_details;
     const shippingAddress = serializeShippingAddress(customerDetails);
 
@@ -409,16 +477,18 @@ export const finalizeCheckoutSession = createServerFn({ method: "POST" })
 
     if (updateError) throw new Error(updateError.message);
 
-    await sendOrderConfirmationEmail({
-      orderNumber: existingOrder.order_number,
-      customerName: customerDetails?.name ?? existingOrder.customer_name ?? "",
-      customerEmail: customerDetails?.email ?? existingOrder.customer_email ?? "",
-      items: existingOrder.items,
-      totalAmount:
-        typeof session.amount_total === "number"
-          ? session.amount_total / 100
-          : Number(existingOrder.total_amount),
-    });
+    if (isPaid) {
+      await sendOrderConfirmationEmail({
+        orderNumber: existingOrder.order_number,
+        customerName: customerDetails?.name ?? existingOrder.customer_name ?? "",
+        customerEmail: customerDetails?.email ?? existingOrder.customer_email ?? "",
+        items: existingOrder.items,
+        totalAmount:
+          typeof session.amount_total === "number"
+            ? session.amount_total / 100
+            : Number(existingOrder.total_amount),
+      });
+    }
 
     return {
       orderNumber: existingOrder.order_number,

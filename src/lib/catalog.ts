@@ -8,7 +8,8 @@ export const SIZE_OPTIONS = ["XS", "S", "M", "L", "XL", "XXL", "One Size"];
 
 export type AdminRole = "admin" | "employee";
 export type ProductStatus = "active" | "sold_out" | "draft";
-export type OrderStatus = "paid" | "processing" | "shipped" | "delivered" | "canceled";
+export type OrderStatus = "draft" | "paid" | "processing" | "shipped" | "delivered" | "canceled";
+export type PaymentStatus = "pending" | "paid" | "canceled";
 
 export type ProductImage = {
   id: string;
@@ -62,7 +63,7 @@ export type OrderRecord = {
   customerName: string;
   customerEmail: string;
   status: OrderStatus;
-  paymentStatus: string;
+  paymentStatus: PaymentStatus;
   preorder: boolean;
   totalAmount: number;
   items: Json;
@@ -375,7 +376,7 @@ export function mapOrderRow(row: {
   customer_name: string;
   customer_email: string;
   status: OrderStatus;
-  payment_status: string;
+  payment_status: PaymentStatus;
   preorder: boolean;
   total_amount: number | string;
   items: Json;

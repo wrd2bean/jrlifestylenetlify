@@ -16,13 +16,13 @@ function SizeGuidePage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteNav />
-      <div className="mx-auto max-w-5xl px-5 py-20">
+      <div className="mx-auto max-w-5xl px-5 py-16 sm:py-20">
         <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-blood">Fit Guide</p>
-        <h1 className="mt-3 font-display text-6xl uppercase tracking-[0.08em]">Size Guide</h1>
+        <h1 className="mt-3 font-display text-5xl uppercase tracking-[0.08em] sm:text-6xl">Size Guide</h1>
         <p className="mt-6 max-w-2xl text-muted-foreground">
           JR Lifestyle tees are designed with an oversized streetwear fit. If you want a truer fit, size down. If you want the intended roomy silhouette, stay true to size.
         </p>
-        <div className="mt-10 overflow-hidden rounded-3xl border border-border/70">
+        <div className="mt-10 overflow-x-auto rounded-3xl border border-border/70">
           <table className="w-full text-left">
             <thead className="bg-card text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
               <tr>

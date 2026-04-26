@@ -39,12 +39,12 @@ function DropPage() {
             BORN <span className="text-blood">TO</span> WIN
           </h1>
           <p className="mx-auto mt-6 max-w-xl text-base text-muted-foreground">
-            Every product you see here is loaded live from the catalog database, so new items show up the moment your team publishes them.
+            Heavyweight tees, fearless graphics, and preorder drops built for the ones who bet on themselves.
           </p>
         </div>
       </section>
-      <section className="py-20">
-        <div className="mx-auto grid max-w-7xl gap-x-6 gap-y-14 px-5 sm:grid-cols-2 lg:grid-cols-3">
+      <section className="py-16 sm:py-20">
+        <div className="mx-auto grid max-w-7xl gap-x-4 gap-y-8 px-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-x-6 lg:gap-y-14">
           {products.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}

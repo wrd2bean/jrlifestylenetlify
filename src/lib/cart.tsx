@@ -6,6 +6,7 @@ export type CartItem = {
   slug: string;
   name: string;
   imageUrl: string;
+  videoUrl?: string;
   price: number;
   quantity: number;
   selectedSize: string;
@@ -15,6 +16,7 @@ export type CartItem = {
 
 type CartContextValue = {
   items: CartItem[];
+  checkoutToken: string;
   itemCount: number;
   subtotal: number;
   taxes: number;
@@ -27,7 +29,14 @@ type CartContextValue = {
 };
 
 const STORAGE_KEY = "jr-lifestyle-cart";
+const CHECKOUT_TOKEN_KEY = "jr-lifestyle-checkout-token";
 const CartContext = createContext<CartContextValue | null>(null);
+
+function createCheckoutToken() {
+  return typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `jr-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
 
 function createCartItemId(productId: string, selectedSize: string, selectedColor: string, isPreorder: boolean) {
   return [productId, selectedSize, selectedColor, isPreorder ? "preorder" : "instock"].join("::");
@@ -35,6 +44,10 @@ function createCartItemId(productId: string, selectedSize: string, selectedColor
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [checkoutToken, setCheckoutToken] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return window.localStorage.getItem(CHECKOUT_TOKEN_KEY) ?? createCheckoutToken();
+  });
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -52,6 +65,20 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+
+    const existingToken = window.localStorage.getItem(CHECKOUT_TOKEN_KEY);
+    if (existingToken) {
+      setCheckoutToken(existingToken);
+      return;
+    }
+
+    const nextToken = createCheckoutToken();
+    window.localStorage.setItem(CHECKOUT_TOKEN_KEY, nextToken);
+    setCheckoutToken(nextToken);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
   }, [items]);
 
@@ -62,6 +89,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     return {
       items,
+      checkoutToken,
       itemCount: items.reduce((sum, item) => sum + item.quantity, 0),
       subtotal,
       taxes,
@@ -80,7 +108,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
           if (existing) {
             return current.map((entry) =>
               entry.id === nextId
-                ? { ...entry, quantity: entry.quantity + (item.quantity ?? 1) }
+                ? {
+                    ...entry,
+                    ...item,
+                    quantity: entry.quantity + (item.quantity ?? 1),
+                  }
                 : entry,
             );
           }
@@ -109,7 +141,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setItems([]);
       },
     };
-  }, [items]);
+  }, [checkoutToken, items]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
